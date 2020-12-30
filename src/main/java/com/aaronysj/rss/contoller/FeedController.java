@@ -31,6 +31,15 @@ public class FeedController {
 
     @GetMapping("/nba.json")
     public JsonFeedDto getNBAJson() {
+        // 当天的日期
+        Date nowTime = new Date();
+        String today = TimeUtils.dateFormat(nowTime, TimeUtils.DATE_PATTERN);
+        String hour = TimeUtils.dateFormat(nowTime, TimeUtils.HOUR_ONLY_PATTERN);
+        // 超过下午三点就不刷新了
+        if(hour.compareTo("13") >= 0) {
+            return null;
+        }
+
         JsonFeedDto basketball = new JsonFeedDto();
         basketball.setTitle("NBA");
         basketball.setDescription("This is Why We Play");
@@ -39,9 +48,7 @@ public class FeedController {
         basketball.setIcon("https://mat1.gtimg.com/sports/nba/logo/1602/9.png");
         basketball.setFavicon("https://mat1.gtimg.com/www/icon/favicon2.ico");
 
-        // 当天的日期
-        Date nowTime = new Date();
-        String today = TimeUtils.dateFormat(nowTime, TimeUtils.DATE_PATTERN);
+
         String url = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000&startTime=" + today + "&endTime=" + today + "&from=sporthp";
         AjaxResultDto ajaxResultDto = restTemplate.getForObject(url, AjaxResultDto.class);
         Map<String, Object> dateMap = GsonUtils.jsonToMaps(GsonUtils.convertToString(ajaxResultDto.getData()));
