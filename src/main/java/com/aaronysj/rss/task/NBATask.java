@@ -1,5 +1,6 @@
 package com.aaronysj.rss.task;
 
+import com.aaronysj.rss.config.Constants;
 import com.aaronysj.rss.dto.AjaxResultDto;
 import com.aaronysj.rss.dto.JsonFeedDto;
 import com.aaronysj.rss.dto.TencentNBAInfo;
@@ -71,8 +72,9 @@ public class NBATask {
                     }else if("2".equals(tencentNBAInfo.getMatchPeriod())) {
                         matchPeriod = "已结束";
                         gameOver = true;
+                    }else if("3".equals(tencentNBAInfo.getMatchPeriod())) {
+                        matchPeriod = "比赛延期";
                     }
-
                     int leftGoal = Integer.parseInt(tencentNBAInfo.getLeftGoal());
                     int rightGoal = Integer.parseInt(tencentNBAInfo.getRightGoal());
                     String leftName = tencentNBAInfo.getLeftName();
@@ -152,7 +154,13 @@ public class NBATask {
         basketball.setItems(Collections.singletonList(item));
         if(hour.compareTo("15") >= 0) {
             // save to redis
-            reactiveRedisTemplate.opsForValue().set(today, GsonUtils.convertToString(basketball)).block();
+            Long size = reactiveRedisTemplate.opsForList().size(Constants.NBA_HISTORY_KEY).block();
+            // 当已经存了10天的之后，将最左的弹出
+            if(size != null && size == 10) {
+                reactiveRedisTemplate.opsForList().leftPop(Constants.NBA_HISTORY_KEY).block();
+            }
+            reactiveRedisTemplate.opsForList().rightPush(Constants.NBA_HISTORY_KEY, GsonUtils.convertToString(basketball)).block();
+//            reactiveRedisTemplate.opsForValue().set(today, GsonUtils.convertToString(basketball)).block();
         }
         return basketball;
     }

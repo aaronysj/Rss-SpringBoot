@@ -1,5 +1,6 @@
 package com.aaronysj.rss.contoller;
 
+import com.aaronysj.rss.config.Constants;
 import com.aaronysj.rss.dto.AjaxResultDto;
 import com.aaronysj.rss.dto.JsonFeedDto;
 import com.aaronysj.rss.dto.TencentNBAInfo;
@@ -10,12 +11,15 @@ import com.rometools.rome.feed.rss.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 考虑做一个适配器，
@@ -44,8 +48,20 @@ public class FeedController {
         // 超过下午三点就不实时拿腾讯数据了，直接去 redis 里拿
         if(hour.compareTo("15") >= 0) {
             // get from redis
-            String block = reactiveRedisTemplate.opsForValue().get(today).block();
-            return GsonUtils.convertToBean(block, JsonFeedDto.class);
+            // last 10 days of nba
+//            String block = reactiveRedisTemplate.opsForValue().get(today).block();
+            List<JsonFeedDto> jsonFeedDtos = reactiveRedisTemplate.opsForList()
+                    .range(Constants.NBA_HISTORY_KEY, 0, -1)
+                    .toStream()
+                    .map(str -> GsonUtils.convertToBean(str, JsonFeedDto.class)).collect(Collectors.toList());
+            // 不为空时
+            if(!CollectionUtils.isEmpty(jsonFeedDtos)) {
+                List<JsonFeedDto.Item> items = jsonFeedDtos.stream().flatMap(jsonFeedDto -> jsonFeedDto.getItems().stream()).collect(Collectors.toList());
+                JsonFeedDto jsonFeedDto = jsonFeedDtos.get(0);
+                jsonFeedDto.setItems(items);
+                return jsonFeedDto;
+            }
+            return null;
         }
         // 白天时间直接刷新
         return nbaTask.getTodayNBAGameInfo();
