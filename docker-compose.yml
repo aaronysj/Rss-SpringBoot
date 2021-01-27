@@ -1,0 +1,23 @@
+version: '3'
+services:
+  redis:
+    container_name: rss_redis
+    image: redis
+    command: redis-server --requirepass gxfc --appendonly yes
+    volumes:
+      - ./data:/data
+    networks:
+      - appnet
+  rss:
+    container_name: rss
+    build: . 
+    image: aaronysj/rss
+    ports:
+      - 9000:8080
+    networks:
+      - appnet
+    depends_on:
+      - redis
+
+networks:
+  appnet:
