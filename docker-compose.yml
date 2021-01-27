@@ -4,6 +4,8 @@ services:
     container_name: rss_redis
     image: redis
     command: redis-server --requirepass gxfc --appendonly yes
+    environment:
+      - TZ=Asia/Shanghai
     volumes:
       - ./data:/data
     networks:
@@ -12,8 +14,10 @@ services:
     container_name: rss
     build: . 
     image: aaronysj/rss
+    environment:
+      - TZ=Asia/Shanghai
     ports:
-      - 9000:8080
+      - 8443:8080
     networks:
       - appnet
     depends_on:
