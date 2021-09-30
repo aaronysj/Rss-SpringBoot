@@ -3,8 +3,8 @@ package com.aaronysj.rss.contoller;
 import com.aaronysj.rss.config.Constants;
 import com.aaronysj.rss.dto.AjaxResultDto;
 import com.aaronysj.rss.dto.JsonFeedDto;
-import com.aaronysj.rss.dto.TencentNBAInfo;
-import com.aaronysj.rss.task.NBATask;
+import com.aaronysj.rss.nba.TencentNBAInfo;
+import com.aaronysj.rss.nba.NBATask;
 import com.aaronysj.rss.utils.GsonUtils;
 import com.aaronysj.rss.utils.TimeUtils;
 import com.rometools.rome.feed.rss.*;
@@ -19,7 +19,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 考虑做一个适配器，
