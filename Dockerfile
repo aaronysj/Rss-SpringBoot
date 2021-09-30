@@ -1,4 +1,4 @@
-FROM arm64v8/openjdk:8
+FROM openjdk:8-alpine
 RUN adduser --system --group spring
 USER spring:spring
 ARG JAR_FILE=build/libs/*.jar
