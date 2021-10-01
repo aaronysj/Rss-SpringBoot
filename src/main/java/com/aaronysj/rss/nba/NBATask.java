@@ -1,9 +1,8 @@
-package com.aaronysj.rss.task;
+package com.aaronysj.rss.nba;
 
 import com.aaronysj.rss.config.Constants;
 import com.aaronysj.rss.dto.AjaxResultDto;
 import com.aaronysj.rss.dto.JsonFeedDto;
-import com.aaronysj.rss.dto.TencentNBAInfo;
 import com.aaronysj.rss.utils.GsonUtils;
 import com.aaronysj.rss.utils.TimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;

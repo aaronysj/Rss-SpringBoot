@@ -1,4 +1,4 @@
-package com.aaronysj.rss.dto;
+package com.aaronysj.rss.nba;
 
 import lombok.Data;
 
