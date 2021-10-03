@@ -18,9 +18,11 @@ a personal feed server based on spring boot
 
 ### 英超赛程
 
-## Docker 化一键部署
+## Docker 部署
 
 ```shell
+cd Rss-SpringBoot
+./gradlew clean bootJar
 dcoker-compose up -d
 ```
 
