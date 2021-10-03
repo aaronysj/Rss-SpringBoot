@@ -13,7 +13,8 @@ a personal feed server based on spring boot
 ### NBA 赛程
 `/rss/feed/nba.json`
 
-该`feed`设计为：每天 0 - 15 点，每间隔 15 分钟，去 [腾讯 NBA 赛程](https://nba.stats.qq.com/schedule/) 拉取数据;超过 15 点之后，数据全部入 redis
+每天 0 - 15 点，每间隔 5 分钟，去 [腾讯 NBA 赛程](https://nba.stats.qq.com/schedule/) 拉取数据  
+超过 15 点之后直接从`redis`取前9天和明天共10天的数据
 
 ![示例](https://z3.ax1x.com/2021/10/03/4L7f6U.png)
 
