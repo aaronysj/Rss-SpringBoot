@@ -2,7 +2,6 @@ package com.aaronysj.rss.feed.nba;
 
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
-import com.aaronysj.rss.config.CacheKey;
 import com.aaronysj.rss.dto.JsonFeedDto;
 import com.aaronysj.rss.feed.FeedTask;
 import com.aaronysj.rss.utils.TimeUtils;
@@ -11,12 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -34,12 +29,26 @@ public class NbaTask implements FeedTask {
     @Autowired
     private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
+    @Autowired
+    private NbaCacheUtils nbaCacheUtils;
+
     /**
      * 每5分钟实时更新今天的内容
      */
-//    @Scheduled(fixedRate = 5 * 60_000)
+    @Scheduled(fixedRate = 5 * 60_000)
     public void nbaTaskEvery5Min() {
-        executeTask(new Date());
+        Date date = new Date();
+        // 超过15点就别跑今天的数据了
+        if (after15(date)) {
+            return;
+        }
+        refreshTodayFeed(date);
+    }
+
+    private JsonFeedDto refreshTodayFeed(Date date) {
+        JsonFeedDto jsonFeedDto = executeTask(date);
+        saveTodayToRedis(date, jsonFeedDto);
+        return jsonFeedDto;
     }
 
     /**
@@ -50,7 +59,13 @@ public class NbaTask implements FeedTask {
     @Scheduled(cron = "0 0 15 * * ?")
     public void nbaTaskAt15() {
         log.info("nbaTaskAt15");
-        executeTask(new Date());
+        Date date = new Date();
+        JsonFeedDto todayNba = executeTask(date);
+        saveTodayToRedis(date, todayNba);
+
+        Date tomorrow = TimeUtils.getDaysAfter(1);
+        JsonFeedDto tomorrowNba = executeTask(tomorrow);
+        saveTodayToRedis(tomorrow, tomorrowNba);
     }
 
     /**
@@ -63,51 +78,42 @@ public class NbaTask implements FeedTask {
         // 生成当天的赛程信息
         JsonFeedDto.Item item = getItem(date);
         basketball.setItems(Collections.singletonList(item));
-        saveToRedisAfter15(date, basketball);
         return basketball;
+    }
+
+    /**
+     * 当前的小时 是否大于15
+     *
+     * @param date 当前时间
+     * @return true 15 - 24 点；false 0 - 15 点
+     */
+    private boolean after15(Date date) {
+        String hour = TimeUtils.dateFormat(date, TimeUtils.HOUR_ONLY_PATTERN);
+        return hour.compareTo("15") >= 0;
     }
 
     @Override
     public JsonFeedDto restAdaptor() {
         Date nowTime = new Date();
-        String hour = TimeUtils.dateFormat(nowTime, TimeUtils.HOUR_ONLY_PATTERN);
         // 超过下午 15 点就不实时拿腾讯数据了，直接去 redis 里拿
-        if (hour.compareTo("15") >= 0) {
-            // 直接返回过去十天的数据
-            List<JsonFeedDto> jsonFeedDtos = reactiveRedisTemplate.opsForList()
-                    .range(CacheKey.NBA_HISTORY_KEY, 0, -1)
-                    .toStream()
-                    .map(str -> JSONUtil.toBean(str, JsonFeedDto.class))
-                    .collect(Collectors.toList());
-            // 不为空时
-            if (!CollectionUtils.isEmpty(jsonFeedDtos)) {
-                List<JsonFeedDto.Item> items = jsonFeedDtos.stream().flatMap(jsonFeedDto -> jsonFeedDto.getItems().stream()).collect(Collectors.toList());
-                JsonFeedDto jsonFeedDto = jsonFeedDtos.get(0);
-                jsonFeedDto.setItems(items);
-                return jsonFeedDto;
-            }
+        if (after15(nowTime)) {
+            return nbaCacheUtils.getLatest10Days();
         }
+        // 取当天的 redis
+        Optional<JsonFeedDto> todayFeed = nbaCacheUtils.get(nowTime);
         // 白天时间直接刷新
-        return this.executeTask(nowTime);
+        return todayFeed.orElseGet(() -> refreshTodayFeed(nowTime));
     }
 
+
     /**
-     * 超过下午15点之后，存入 redis
+     * 存 redis
      *
-     * @param nowTime    date
-     * @param basketball JsonFeedDto
+     * @param date       时间
+     * @param basketBall json
      */
-    private void saveToRedisAfter15(Date nowTime, JsonFeedDto basketball) {
-        String hour = TimeUtils.dateFormat(nowTime, TimeUtils.HOUR_ONLY_PATTERN);
-        if (hour.compareTo("15") >= 0) {
-            // save to redis
-            Long size = reactiveRedisTemplate.opsForList().size(CacheKey.NBA_HISTORY_KEY).block();
-            // 当已经存了10天的之后，将最左的弹出
-            if (size != null && size == 10) {
-                reactiveRedisTemplate.opsForList().leftPop(CacheKey.NBA_HISTORY_KEY).block();
-            }
-            reactiveRedisTemplate.opsForList().rightPush(CacheKey.NBA_HISTORY_KEY, JSONUtil.toJsonStr(basketball)).block();
-        }
+    private void saveTodayToRedis(Date date, JsonFeedDto basketBall) {
+        nbaCacheUtils.update(date, basketBall);
     }
 
     private JsonFeedDto.Item getItem(Date nowTime) {
@@ -163,7 +169,6 @@ public class NbaTask implements FeedTask {
                             .append(" <a href=\"").append(tencentNbaInfo.getWebUrl()).append("\">").append(video).append("</a>")
                             .append(" <a href=\"https://nba.stats.qq.com/nbascore/?mid=").append(mid).append("\">数据</a>")
                             .append(" <a href=\"").append(tencentNbaInfo.getWebUrl()).append("&replay=1").append("\">回放</a>");
-//                            .append(" <a style=\"color:").append(thirdColor).append(";\" href=\" ").append(TencentNbaInfo.getWebUrl()).append("&replay=1").append("\">回放</a>");
                     return sb.toString();
                 })
                 .collect(Collectors.joining("<br />"));

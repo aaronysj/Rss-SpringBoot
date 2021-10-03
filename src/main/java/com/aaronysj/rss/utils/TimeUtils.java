@@ -6,9 +6,8 @@ import org.springframework.util.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * TimeUtil
@@ -35,6 +34,21 @@ public class TimeUtils {
 	public static final String HOUR_ONLY_PATTERN = "HH";
 
 	public static final String UTC_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX";
+
+	/**
+	 * 获取最近 10 天的日期
+	 */
+	public static List<Object> getLatest10Days(){
+		int[] offsetArr = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1};
+		return Arrays.stream(offsetArr)
+				.mapToObj(TimeUtils::getDaysAfter)
+				.map(date -> dateFormat(date, DATE_PATTERN))
+				.collect(Collectors.toList());
+	}
+
+	public static void main(String[] args) {
+		log.info(getLatest10Days().toString());
+	}
 
 	/**
 	 * 日期相加减天数

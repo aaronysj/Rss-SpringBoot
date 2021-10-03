@@ -19,6 +19,15 @@ public class SpringBeanConfig {
 
     @Bean
     public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        /*@SuppressWarnings("all")
+        RedisSerializationContext<String, String> serializationContext = RedisSerializationContext
+                .newSerializationContext()
+                .key((RedisSerializer) new StringRedisSerializer())
+                .value(new StringRedisSerializer())
+                .hashKey(StringRedisSerializer.UTF_8)
+                .hashValue(new StringRedisSerializer())
+                .build();*/
+
         return new ReactiveRedisTemplate<>(factory, RedisSerializationContext.string());
     }
 }
