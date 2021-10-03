@@ -25,4 +25,9 @@ public interface FeedTask {
      */
     JsonFeedDto restAdaptor();
 
+    /**
+     * 每次项目启动初始化
+     */
+    void init();
+
 }

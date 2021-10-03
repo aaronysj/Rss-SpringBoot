@@ -38,16 +38,21 @@ public class TimeUtils {
 	/**
 	 * 获取最近 10 天的日期
 	 */
-	public static List<Object> getLatest10Days(){
-		int[] offsetArr = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1};
-		return Arrays.stream(offsetArr)
-				.mapToObj(TimeUtils::getDaysAfter)
+	public static List<Object> getLast9DaysAndTomorrow(){
+		return getLast9DaysAndTomorrowDate().stream()
 				.map(date -> dateFormat(date, DATE_PATTERN))
 				.collect(Collectors.toList());
 	}
 
+	public static List<Date> getLast9DaysAndTomorrowDate(){
+		int[] offsetArr = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1};
+		return Arrays.stream(offsetArr)
+				.mapToObj(TimeUtils::getDaysAfter)
+				.collect(Collectors.toList());
+	}
+
 	public static void main(String[] args) {
-		log.info(getLatest10Days().toString());
+		log.info(getLast9DaysAndTomorrow().toString());
 	}
 
 	/**
@@ -81,7 +86,7 @@ public class TimeUtils {
 	}
 
 	public static String dateFormat(Date date) {
-		return dateFormat(date, null);
+		return dateFormat(date, DATE_PATTERN);
 	}
 
 	/**

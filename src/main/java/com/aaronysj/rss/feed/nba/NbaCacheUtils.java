@@ -39,7 +39,7 @@ public class NbaCacheUtils {
     }
 
     public void update(Date date, JsonFeedDto nba) {
-        update(TimeUtils.dateFormat(date, TimeUtils.DATE_PATTERN), nba);
+        update(TimeUtils.dateFormat(date), nba);
     }
 
     public Optional<JsonFeedDto> get(String date) {
@@ -51,14 +51,14 @@ public class NbaCacheUtils {
     }
 
     public Optional<JsonFeedDto> get(Date date) {
-        return get(TimeUtils.dateFormat(date, TimeUtils.DATE_PATTERN));
+        return get(TimeUtils.dateFormat(date));
     }
 
     /**
      * 返回最近十天的 nba 赛程
      */
     public JsonFeedDto getLatest10Days() {
-        List<Object> latest10Days = TimeUtils.getLatest10Days();
+        List<Object> latest10Days = TimeUtils.getLast9DaysAndTomorrow();
         List<Object> blockObjs = reactiveRedisTemplate.opsForHash()
                 .multiGet(NBA_HISTORY_KEY, latest10Days).block();
         if (CollectionUtils.isEmpty(blockObjs)) {

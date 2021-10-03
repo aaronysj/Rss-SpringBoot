@@ -42,13 +42,7 @@ public class NbaTask implements FeedTask {
         if (after15(date)) {
             return;
         }
-        refreshTodayFeed(date);
-    }
-
-    private JsonFeedDto refreshTodayFeed(Date date) {
-        JsonFeedDto jsonFeedDto = executeTask(date);
-        saveTodayToRedis(date, jsonFeedDto);
-        return jsonFeedDto;
+        executeTask(date);
     }
 
     /**
@@ -60,12 +54,10 @@ public class NbaTask implements FeedTask {
     public void nbaTaskAt15() {
         log.info("nbaTaskAt15");
         Date date = new Date();
-        JsonFeedDto todayNba = executeTask(date);
-        saveTodayToRedis(date, todayNba);
+        executeTask(date);
 
         Date tomorrow = TimeUtils.getDaysAfter(1);
-        JsonFeedDto tomorrowNba = executeTask(tomorrow);
-        saveTodayToRedis(tomorrow, tomorrowNba);
+        executeTask(tomorrow);
     }
 
     /**
@@ -78,6 +70,8 @@ public class NbaTask implements FeedTask {
         // 生成当天的赛程信息
         JsonFeedDto.Item item = getItem(date);
         basketball.setItems(Collections.singletonList(item));
+        // save
+        saveTodayToRedis(date, basketball);
         return basketball;
     }
 
@@ -102,9 +96,22 @@ public class NbaTask implements FeedTask {
         // 取当天的 redis
         Optional<JsonFeedDto> todayFeed = nbaCacheUtils.get(nowTime);
         // 白天时间直接刷新
-        return todayFeed.orElseGet(() -> refreshTodayFeed(nowTime));
+        return todayFeed.orElseGet(() -> executeTask(nowTime));
     }
 
+    @Override
+    public void init() {
+        TimeUtils.getLast9DaysAndTomorrowDate().forEach(date -> {
+            // 判断是否已经存在
+            Optional<JsonFeedDto> jsonFeedDto = nbaCacheUtils.get(date);
+            if (jsonFeedDto.isPresent()) {
+                log.info("{} init passed", TimeUtils.dateFormat(date));
+            } else {
+                executeTask(date);
+                log.info("{} init finished", TimeUtils.dateFormat(date));
+            }
+        });
+    }
 
     /**
      * 存 redis
@@ -117,7 +124,7 @@ public class NbaTask implements FeedTask {
     }
 
     private JsonFeedDto.Item getItem(Date nowTime) {
-        String today = TimeUtils.dateFormat(nowTime, TimeUtils.DATE_PATTERN);
+        String today = TimeUtils.dateFormat(nowTime);
         String hour = TimeUtils.dateFormat(nowTime, TimeUtils.HOUR_ONLY_PATTERN);
         // 当天的日期
         String url = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000&startTime=" + today + "&endTime=" + today + "&from=sporthp";
