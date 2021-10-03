@@ -13,11 +13,13 @@ configurations {
 		extendsFrom annotationProcessor
 	}
 }
-
 repositories {
+	maven { url 'https://maven.aliyun.com/repository/spring' }
+	maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+	maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
+	maven { url 'http://maven.aliyun.com/repository/google' }
 	mavenCentral()
 }
-
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compileOnly 'org.projectlombok:lombok'
