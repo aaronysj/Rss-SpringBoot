@@ -7,8 +7,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 /**
- * @author shijie.ye
- * @version 0.0.1
+ * init feed
+ *
+ * @author aaronysj
  * @date 10/3/21
  */
 @Component
