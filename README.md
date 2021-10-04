@@ -6,7 +6,7 @@ It is a json feed server based on spring boot.
 
 | done | doing   | plan         |
 | ---------- | ---------- | ---------- |
-|  ✅ NBA 赛程 |   | ð 新闻相关 feed |
+|  ✅ NBA 赛程 |   |  技术相关，blog 相关 |
 
 ## Rss 接口
 
