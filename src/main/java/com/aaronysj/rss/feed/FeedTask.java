@@ -28,6 +28,6 @@ public interface FeedTask {
     /**
      * 每次项目启动初始化
      */
-    void init();
+    default void init() {}
 
 }

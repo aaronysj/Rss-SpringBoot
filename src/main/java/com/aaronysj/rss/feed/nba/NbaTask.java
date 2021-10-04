@@ -4,12 +4,14 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.aaronysj.rss.dto.JsonFeedDto;
 import com.aaronysj.rss.feed.FeedTask;
+import com.aaronysj.rss.utils.FeedUrlUtils;
 import com.aaronysj.rss.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -68,10 +70,9 @@ public class NbaTask implements FeedTask {
         // 生成 feed 的主信息
         JsonFeedDto basketball = generateNbaJsonFeedDto();
         // 生成当天的赛程信息
-        JsonFeedDto.Item item = getItem(date);
-        basketball.setItems(Collections.singletonList(item));
-        // save
-        saveTodayToRedis(date, basketball);
+        Optional<JsonFeedDto.Item> optionalItem = getOptionalItem(date);
+        optionalItem.ifPresent(item -> basketball.setItems(Collections.singletonList(item)));
+        nbaCacheUtils.update(date, basketball);
         return basketball;
     }
 
@@ -113,24 +114,18 @@ public class NbaTask implements FeedTask {
         });
     }
 
-    /**
-     * 存 redis
-     *
-     * @param date       时间
-     * @param basketBall json
-     */
-    private void saveTodayToRedis(Date date, JsonFeedDto basketBall) {
-        nbaCacheUtils.update(date, basketBall);
-    }
-
-    private JsonFeedDto.Item getItem(Date nowTime) {
+    private Optional<JsonFeedDto.Item> getOptionalItem(Date nowTime) {
         String today = TimeUtils.dateFormat(nowTime);
         String hour = TimeUtils.dateFormat(nowTime, TimeUtils.HOUR_ONLY_PATTERN);
         // 当天的日期
-        String url = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000&startTime=" + today + "&endTime=" + today + "&from=sporthp";
+//        String url = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000&startTime=" + today + "&endTime=" + today + "&from=sporthp";
+        String url = FeedUrlUtils.getNbaScheduleUrl(today, today);
         String body = HttpUtil.get(url, 2000);
         TencentApiResultDto tencentApiResultDto = JSONUtil.toBean(body, TencentApiResultDto.class);
         Map<String, List<TencentNbaInfo>> data = tencentApiResultDto.getData();
+        if(CollectionUtils.isEmpty(data)) {
+            return Optional.empty();
+        }
         List<TencentNbaInfo> tencentNbaInfos = data.get(today);
         StringBuilder contentBuilder = new StringBuilder();
         // 主要内容
@@ -202,7 +197,7 @@ public class NbaTask implements FeedTask {
         item.setTitle(today + " 比赛概况");
         item.setContentHtml(contentBuilder.toString());
         item.setDatePublished(TimeUtils.dateFormat(nowTime, TimeUtils.UTC_TIME_PATTERN));
-        return item;
+        return Optional.of(item);
     }
 
     private String parseMatchPeriod(TencentNbaInfo tencentNbaInfo) {
