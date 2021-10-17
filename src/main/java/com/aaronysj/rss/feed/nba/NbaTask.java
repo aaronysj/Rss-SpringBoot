@@ -133,6 +133,8 @@ public class NbaTask implements FeedTask {
         TencentApiResultDto tencentApiResultDto = JSONUtil.toBean(body, TencentApiResultDto.class);
         Map<String, List<TencentNbaInfo>> data = tencentApiResultDto.getData();
         if(CollectionUtils.isEmpty(data)) {
+            // 今天没有比赛
+            nbaCacheUtils.updateTodayLastGameTime(nowTime, TimeUtils.dateFormat(new Date()) + " 00:00:00");
             return Optional.empty();
         }
         List<TencentNbaInfo> tencentNbaInfos = data.get(today);
