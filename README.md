@@ -26,7 +26,7 @@ It is a json feed server based on spring boot.
 ```shell
 cd Rss-SpringBoot
 ./gradlew clean bootJar
-dcoker-compose up -d
+docker-compose up -d
 ```
 
 
