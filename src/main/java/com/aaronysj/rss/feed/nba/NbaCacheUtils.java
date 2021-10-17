@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +35,26 @@ public class NbaCacheUtils {
      */
     public static final String NBA_HISTORY_KEY = "rss:nba:history";
 
+    /**
+     * string  今天最后一场比赛时间
+     * key                               value
+     * rss:nba:todayLastGame:2021-10-17  2021-10-17 15:00:00
+     */
+    public static final String TODAY_LAST_GAME_PREFIX = "rss:nba:todayLastGame:";
+
+    /**
+     * 获取今天最后一场比赛
+     * @param date date
+     * @return Optional<Date>
+     */
+    public Optional<Date> getTodayLastGame(Date date) {
+        return reactiveRedisTemplate.opsForValue().get(TODAY_LAST_GAME_PREFIX + TimeUtils.dateFormat(date)).blockOptional().map(x -> TimeUtils.dateParse(x, TimeUtils.DATE_TIME_PATTERN));
+    }
+
+    public void updateTodayLastGameTime(Date date, String startTime) {
+        reactiveRedisTemplate.opsForValue().set(TODAY_LAST_GAME_PREFIX + TimeUtils.dateFormat(date), startTime, Duration.ofHours(24)).block();
+    }
+
     public void update(String date, JsonFeedDto nba) {
         reactiveRedisTemplate.opsForHash().put(NBA_HISTORY_KEY, date, JSONUtil.toJsonStr(nba)).block();
     }
@@ -43,11 +64,8 @@ public class NbaCacheUtils {
     }
 
     public Optional<JsonFeedDto> get(String date) {
-        String today = (String) reactiveRedisTemplate.opsForHash().get(NBA_HISTORY_KEY, date).block();
-        if (today == null) {
-            return Optional.empty();
-        }
-        return Optional.of(JSONUtil.toBean(today, JsonFeedDto.class));
+        Optional<Object> todayStr = reactiveRedisTemplate.opsForHash().get(NBA_HISTORY_KEY, date).blockOptional();
+        return todayStr.map(o -> JSONUtil.toBean((String) o, JsonFeedDto.class));
     }
 
     public Optional<JsonFeedDto> get(Date date) {

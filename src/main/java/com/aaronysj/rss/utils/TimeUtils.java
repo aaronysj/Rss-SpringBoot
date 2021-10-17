@@ -73,6 +73,13 @@ public class TimeUtils {
 		return cal.getTime();
 	}
 
+	public static Date plusHours(Date day, int hours) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(day);
+		cal.add(Calendar.HOUR, hours);
+		return cal.getTime();
+	}
+
 	/**
 	 * 时间格式化成字符串
 	 *

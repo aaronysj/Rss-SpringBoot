@@ -41,7 +41,7 @@ public class NbaTask implements FeedTask {
     public void nbaTaskEvery5Min() {
         Date date = new Date();
         // 超过15点就别跑今天的数据了
-        if (after15(date)) {
+        if (checkTodayGamesOver(date)) {
             return;
         }
         executeTask(date);
@@ -77,12 +77,21 @@ public class NbaTask implements FeedTask {
     }
 
     /**
+     * 判断今天的比较结束没有
      * 当前的小时 是否大于15
      *
      * @param date 当前时间
      * @return true 15 - 24 点；false 0 - 15 点
      */
-    private boolean after15(Date date) {
+    private boolean checkTodayGamesOver(Date date) {
+        Optional<Date> todayLastGame = nbaCacheUtils.getTodayLastGame(date);
+        if (todayLastGame.isPresent()) {
+            Date gameOverTime = TimeUtils.plusHours(todayLastGame.get(), 3);
+            if (date.compareTo(gameOverTime)  > 0) {
+                return true;
+            }
+        }
+        // 今天最后的一场比赛已经结束
         String hour = TimeUtils.dateFormat(date, TimeUtils.HOUR_ONLY_PATTERN);
         return hour.compareTo("15") >= 0;
     }
@@ -91,7 +100,7 @@ public class NbaTask implements FeedTask {
     public JsonFeedDto restAdaptor() {
         Date nowTime = new Date();
         // 超过下午 15 点就不实时拿腾讯数据了，直接去 redis 里拿
-        if (after15(nowTime)) {
+        if (checkTodayGamesOver(nowTime)) {
             return nbaCacheUtils.getLatest10Days();
         }
         // 取当天的 redis
@@ -127,6 +136,17 @@ public class NbaTask implements FeedTask {
             return Optional.empty();
         }
         List<TencentNbaInfo> tencentNbaInfos = data.get(today);
+
+        // 记录下当天最后一场比赛
+        if (TimeUtils.dateFormat(new Date()).equals(TimeUtils.dateFormat(nowTime))) {
+            String lastGameStartTime = tencentNbaInfos.get(tencentNbaInfos.size() - 1).getStartTime();
+            Optional<Date> todayLastGame = nbaCacheUtils.getTodayLastGame(nowTime);
+            if (!todayLastGame.isPresent()) {
+                // 存下今天的最后一场比赛
+                nbaCacheUtils.updateTodayLastGameTime(nowTime, lastGameStartTime);
+            }
+        }
+
         StringBuilder contentBuilder = new StringBuilder();
         // 主要内容
         String content = tencentNbaInfos.stream()
