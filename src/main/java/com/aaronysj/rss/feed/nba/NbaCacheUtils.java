@@ -90,7 +90,10 @@ public class NbaCacheUtils {
         if (CollectionUtils.isEmpty(jsonFeedDtos)) {
             return null;
         }
-        List<JsonFeedDto.Item> items = jsonFeedDtos.stream().flatMap(jsonFeedDto -> jsonFeedDto.getItems().stream()).collect(Collectors.toList());
+        List<JsonFeedDto.Item> items = jsonFeedDtos.stream()
+            .filter(jsonFeedDto -> !CollectionUtils.isEmpty(jsonFeedDto.getItems()))
+            .flatMap(jsonFeedDto -> jsonFeedDto.getItems().stream())
+            .collect(Collectors.toList());
         JsonFeedDto jsonFeedDto = jsonFeedDtos.get(0);
         jsonFeedDto.setItems(items);
         return jsonFeedDto;
