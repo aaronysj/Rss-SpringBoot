@@ -1,5 +1,6 @@
-package com.aaronysj.rss.feed.nba;
+package com.aaronysj.rss.feed.sports.tencent;
 
+import com.aaronysj.rss.feed.sports.tencent.nba.TencentBallInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,10 +18,10 @@ import java.util.Map;
  *     "data": {
  *         "2021-10-03" : [
  *              {
- *                  @see com.aaronysj.rss.feed.nba.TencentNbaInfo
+ *                  @see TencentBallInfo
  *              }，
  *              {
- *                  @see com.aaronysj.rss.feed.nba.TencentNbaInfo
+ *                  @see TencentBallInfo
  *              }
  *         ]
  *     }
@@ -36,7 +37,7 @@ import java.util.Map;
 public class TencentApiResultDto {
 
     private int code;
-    private Map<String, List<TencentNbaInfo>> data;
+    private Map<String, List<TencentBallInfo>> data;
     private String version;
 
     public static TencentApiResultDto ok(){

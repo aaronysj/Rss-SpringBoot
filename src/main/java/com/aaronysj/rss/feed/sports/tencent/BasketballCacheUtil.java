@@ -1,12 +1,10 @@
-package com.aaronysj.rss.feed.nba;
+package com.aaronysj.rss.feed.sports.tencent;
 
 import cn.hutool.json.JSONUtil;
 import com.aaronysj.rss.dto.JsonFeedDto;
 import com.aaronysj.rss.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
@@ -20,27 +18,18 @@ import java.util.stream.Collectors;
  * @author aaronysj
  * @date 10/3/21
  */
-@Component
 @Slf4j
-public class NbaCacheUtils {
+public class BasketballCacheUtil {
 
-    @Autowired
-    private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
+    private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
-    /**
-     * map
-     * key        value
-     * 2021-10-03 JsonFeedDto
-     * 2021-10-02 JsonFeedDto
-     */
-    public static final String NBA_HISTORY_KEY = "rss:nba:history";
+    private final BallFeed feedCache;
 
-    /**
-     * string  今天最后一场比赛时间
-     * key                               value
-     * rss:nba:todayLastGame:2021-10-17  2021-10-17 15:00:00
-     */
-    public static final String TODAY_LAST_GAME_PREFIX = "rss:nba:todayLastGame:";
+    public BasketballCacheUtil(ReactiveRedisTemplate<String, String> reactiveRedisTemplate, BallFeed feedCache) {
+        this.reactiveRedisTemplate = reactiveRedisTemplate;
+        this.feedCache = feedCache;
+    }
+
 
     /**
      * 获取今天最后一场比赛
@@ -48,15 +37,15 @@ public class NbaCacheUtils {
      * @return Optional<Date>
      */
     public Optional<Date> getTodayLastGame(Date date) {
-        return reactiveRedisTemplate.opsForValue().get(TODAY_LAST_GAME_PREFIX + TimeUtils.dateFormat(date)).blockOptional().map(x -> TimeUtils.dateParse(x, TimeUtils.DATE_TIME_PATTERN));
+        return reactiveRedisTemplate.opsForValue().get(feedCache.getTodayLastGameKeyPrefix() + TimeUtils.dateFormat(date)).blockOptional().map(x -> TimeUtils.dateParse(x, TimeUtils.DATE_TIME_PATTERN));
     }
 
     public void updateTodayLastGameTime(Date date, String startTime) {
-        reactiveRedisTemplate.opsForValue().set(TODAY_LAST_GAME_PREFIX + TimeUtils.dateFormat(date), startTime, Duration.ofHours(24)).block();
+        reactiveRedisTemplate.opsForValue().set(feedCache.getTodayLastGameKeyPrefix() + TimeUtils.dateFormat(date), startTime, Duration.ofHours(24)).block();
     }
 
     public void update(String date, JsonFeedDto nba) {
-        reactiveRedisTemplate.opsForHash().put(NBA_HISTORY_KEY, date, JSONUtil.toJsonStr(nba)).block();
+        reactiveRedisTemplate.opsForHash().put(feedCache.getHistoryKey(), date, JSONUtil.toJsonStr(nba)).block();
     }
 
     public void update(Date date, JsonFeedDto nba) {
@@ -64,7 +53,7 @@ public class NbaCacheUtils {
     }
 
     public Optional<JsonFeedDto> get(String date) {
-        Optional<Object> todayStr = reactiveRedisTemplate.opsForHash().get(NBA_HISTORY_KEY, date).blockOptional();
+        Optional<Object> todayStr = reactiveRedisTemplate.opsForHash().get(feedCache.getHistoryKey(), date).blockOptional();
         return todayStr.map(o -> JSONUtil.toBean((String) o, JsonFeedDto.class));
     }
 
@@ -78,7 +67,7 @@ public class NbaCacheUtils {
     public JsonFeedDto getLatest10Days() {
         List<Object> latest10Days = TimeUtils.getLast9DaysAndTomorrow();
         List<Object> blockObjs = reactiveRedisTemplate.opsForHash()
-                .multiGet(NBA_HISTORY_KEY, latest10Days).block();
+                .multiGet(feedCache.getHistoryKey(), latest10Days).block();
         if (CollectionUtils.isEmpty(blockObjs)) {
             return null;
         }

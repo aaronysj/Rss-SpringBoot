@@ -1,5 +1,6 @@
 package com.aaronysj.rss.feed.nba;
 
+import com.aaronysj.rss.feed.sports.tencent.nba.NbaTask;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

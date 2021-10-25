@@ -1,4 +1,4 @@
-package com.aaronysj.rss.feed.nba;
+package com.aaronysj.rss.feed.sports.tencent.nba;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-public class TencentNbaInfo {
+public class TencentBallInfo {
     /**
      * about game
      */

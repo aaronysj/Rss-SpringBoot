@@ -28,7 +28,7 @@ public class FeedTaskExecutor {
         FeedTask feedTask = feedTaskMap.get(module);
         if(feedTask == null) {
             log.info("invalid module: {}", module);
-            return null;
+            throw new FeedException();
         }
         return feedTask.restAdaptor();
     }
