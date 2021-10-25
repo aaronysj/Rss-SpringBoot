@@ -94,7 +94,7 @@ public class CbaTask implements FeedTask, InitializingBean {
         Optional<Date> todayLastGame = basketballCacheUtil.getTodayLastGame(date);
         if (todayLastGame.isPresent()) {
             Date gameOverTime = TimeUtils.plusHours(todayLastGame.get(), 3);
-            if (date.compareTo(gameOverTime)  > 0) {
+            if (date.compareTo(gameOverTime) > 0) {
                 return true;
             }
         }
@@ -136,7 +136,7 @@ public class CbaTask implements FeedTask, InitializingBean {
         String body = HttpUtil.get(url, 2000);
         TencentApiResultDto tencentApiResultDto = JSONUtil.toBean(body, TencentApiResultDto.class);
         Map<String, List<TencentBallInfo>> data = tencentApiResultDto.getData();
-        if(CollectionUtils.isEmpty(data)) {
+        if (CollectionUtils.isEmpty(data)) {
             // 今天没有比赛
             basketballCacheUtil.updateTodayLastGameTime(nowTime, TimeUtils.dateFormat(new Date()) + " 00:00:00");
             return Optional.empty();
@@ -189,8 +189,8 @@ public class CbaTask implements FeedTask, InitializingBean {
                             .append(cbaInfo.getRightGoal())
                             .append(" ")
                             .append("<font color=").append(secondColor).append(">").append(rightName).append("</font>")
-                            .append(" <a href=\"").append(cbaInfo.getWebUrl()).append("\">").append(video).append("</a>");
-//                            .append(" <a href=\"https://nba.stats.qq.com/nbascore/?mid=").append(mid).append("\">数据</a>")
+                            .append(" <a href=\"").append(cbaInfo.getWebUrl()).append("\">").append(video).append("</a>")
+                            .append(" <a href=\"https://sports.qq.com/kbsweb/game.htm?mid=").append(mid).append("\">数据</a>");
 //                            .append(" <a href=\"").append(cbaInfo.getWebUrl()).append("&replay=1").append("\">回放</a>");
                     return sb.toString();
                 })
