@@ -190,7 +190,7 @@ public class CbaTask implements FeedTask, InitializingBean {
                             .append(" ")
                             .append("<font color=").append(secondColor).append(">").append(rightName).append("</font>")
                             .append(" <a href=\"").append(cbaInfo.getWebUrl()).append("\">").append(video).append("</a>")
-                            .append(" <a href=\"https://sports.qq.com/kbsweb/game.htm?mid=").append(mid).append("\">数据</a>");
+                            .append(" <a href=\"https://sports.qq.com/kbsweb/game.htm?mid=100008:").append(mid).append("\">数据</a>");
 //                            .append(" <a href=\"").append(cbaInfo.getWebUrl()).append("&replay=1").append("\">回放</a>");
                     return sb.toString();
                 })
