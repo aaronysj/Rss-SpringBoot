@@ -12,12 +12,14 @@ import com.aaronysj.rss.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +32,9 @@ import java.util.stream.Collectors;
 @Component("cba")
 public class CbaTask implements FeedTask, InitializingBean {
 
+    @Autowired
+    @Qualifier("feedThreadPool")
+    private ThreadPoolExecutor feedPool;
 
     @Autowired
     private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
@@ -39,14 +44,14 @@ public class CbaTask implements FeedTask, InitializingBean {
     /**
      * 每5分钟实时更新今天的内容
      */
-    @Scheduled(fixedRate = 5 * 60_000)
+    @Scheduled(cron = "0 0/5 9/23 * * ? ")
     public void cbaTaskEvery5Min() {
         Date date = new Date();
         // 超过15点就别跑今天的数据了
         if (checkTodayGamesOver(date)) {
             return;
         }
-        executeTask(date);
+        execute(date);
     }
 
     /**
@@ -58,17 +63,17 @@ public class CbaTask implements FeedTask, InitializingBean {
     public void cbaTaskAt15() {
         log.info("cbaTaskAt15");
         Date date = new Date();
-        executeTask(date);
+        execute(date);
 
         Date tomorrow = TimeUtils.getDaysAfter(1);
-        executeTask(tomorrow);
+        execute(tomorrow);
     }
 
     /**
      * 9 - 23 点 每15分钟执行
      */
     @Override
-    public JsonFeedDto executeTask(Date date) {
+    public JsonFeedDto task(Date date) {
         // 生成 feed 的主信息
         JsonFeedDto basketball = generateCbaJsonFeedDto();
         // 生成当天的赛程信息
@@ -76,6 +81,11 @@ public class CbaTask implements FeedTask, InitializingBean {
         optionalItem.ifPresent(item -> basketball.setItems(Collections.singletonList(item)));
         basketballCacheUtil.update(date, basketball);
         return basketball;
+    }
+
+    @Override
+    public ThreadPoolExecutor getPool() {
+        return feedPool;
     }
 
     /**
@@ -112,7 +122,7 @@ public class CbaTask implements FeedTask, InitializingBean {
         // 取当天的 redis
         Optional<JsonFeedDto> todayFeed = basketballCacheUtil.get(nowTime);
         // 白天时间直接刷新
-        return todayFeed.orElseGet(() -> executeTask(nowTime));
+        return todayFeed.orElseGet(() -> task(nowTime));
     }
 
     @Override
@@ -123,8 +133,8 @@ public class CbaTask implements FeedTask, InitializingBean {
             if (jsonFeedDto.isPresent()) {
                 log.info("{} init passed", TimeUtils.dateFormat(date));
             } else {
-                executeTask(date);
-                log.info("{} init finished", TimeUtils.dateFormat(date));
+                log.info("init task {}", TimeUtils.dateFormat(date));
+                execute(date);
             }
         });
     }

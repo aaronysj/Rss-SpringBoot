@@ -1,8 +1,10 @@
 package com.aaronysj.rss.feed;
 
+import com.aaronysj.rss.config.AFeedTask;
 import com.aaronysj.rss.dto.JsonFeedDto;
 
 import java.util.Date;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * feed task interface
@@ -14,10 +16,10 @@ public interface FeedTask {
 
     /**
      * 执行任务
+     * @param date 每天的任务时间
      * @return json feed
      */
-    JsonFeedDto executeTask(Date date);
-
+    JsonFeedDto task(Date date);
 
     /**
      * rest 接口适配
@@ -26,8 +28,30 @@ public interface FeedTask {
     JsonFeedDto restAdaptor();
 
     /**
+     * 获取线程池
+     * @return pool
+     */
+    ThreadPoolExecutor getPool();
+
+    /**
+     * 异步线程池执行
+     * @param date 任务时间
+     */
+    default void execute(Date date) {
+        getPool().submit(new AFeedTask(this, date));
+    }
+
+    /**
      * 每次项目启动初始化
      */
     default void init() {}
+
+    /**
+     * 获取实现类名称
+     * @return class
+     */
+    default String getClassName() {
+         return getClass().getName();
+    }
 
 }

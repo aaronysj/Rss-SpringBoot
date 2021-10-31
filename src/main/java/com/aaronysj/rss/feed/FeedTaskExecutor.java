@@ -3,9 +3,11 @@ package com.aaronysj.rss.feed;
 import com.aaronysj.rss.dto.JsonFeedDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 执行器
@@ -16,6 +18,10 @@ import java.util.Map;
 @Component
 @Slf4j
 public class FeedTaskExecutor {
+
+    @Autowired
+    @Qualifier("feedThreadPool")
+    private ThreadPoolExecutor feedPool;
 
     private final Map<String, FeedTask> feedTaskMap;
 
@@ -36,7 +42,7 @@ public class FeedTaskExecutor {
     public void initAll() {
         feedTaskMap.forEach((key, feedTask) -> {
             log.info("init {} feed", key);
-            feedTask.init();
+            feedPool.submit(feedTask::init);
         });
     }
 
