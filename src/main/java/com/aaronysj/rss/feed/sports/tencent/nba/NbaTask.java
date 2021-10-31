@@ -45,7 +45,7 @@ public class NbaTask implements FeedTask, InitializingBean {
     /**
      * 每5分钟实时更新今天的内容
      */
-    @Scheduled(cron = "0 0/5 0-15 * * ?")
+    @Scheduled(cron = "0 0/1 0-15 * * ?")
     public void nbaTaskEvery5Min() {
         Date date = new Date();
         // 超过15点就别跑今天的数据了
