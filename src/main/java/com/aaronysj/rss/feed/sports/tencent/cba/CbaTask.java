@@ -61,7 +61,7 @@ public class CbaTask implements FeedTask, InitializingBean {
      */
     @Scheduled(cron = "0 0 23 * * ?")
     public void cbaTaskAt15() {
-        log.info("cbaTaskAt15");
+        log.info("cbaTaskAt23");
         Date date = new Date();
         execute(date);
 

@@ -37,7 +37,16 @@ public class SpringBeanConfig {
     }
 
     @Bean("feedThreadPool")
-    public ThreadPoolExecutor threadPoolExecutor() {
+    public ThreadPoolExecutor feedThreadPool() {
+        return new ThreadPoolExecutor(4, 4,
+                10, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.DiscardOldestPolicy());
+    }
+
+    @Bean("robotThreadPool")
+    public ThreadPoolExecutor robotThreadPool() {
         return new ThreadPoolExecutor(4, 4,
                 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),

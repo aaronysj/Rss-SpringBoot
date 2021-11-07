@@ -29,6 +29,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	implementation 'cn.hutool:hutool-all:5.7.13'
+	implementation fileTree(dir: 'taobao', include:['*.jar'])
+//	implementation 'org.jsoup:jsoup:1.14.3'
 
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {

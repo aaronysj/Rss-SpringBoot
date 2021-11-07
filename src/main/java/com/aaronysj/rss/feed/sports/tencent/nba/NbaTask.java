@@ -212,7 +212,15 @@ public class NbaTask implements FeedTask, InitializingBean {
 
         contentBuilder.append(content)
                 .append("<br />")
-                .append("<br />")
+                .append("<br />");
+
+        contentBuilder
+                .append("👉🏻")
+                .append(" <a href=\"https://nba.stats.qq.com/schedule\">schedule</a>")
+                .append(" <a href=\"https://nba.stats.qq.com/standings\">standings</a>")
+                .append("<br />");
+
+        contentBuilder
                 .append("👉🏻")
                 .append(" <a href=\"http://24zhiboba.com\">Welcome</a>")
                 .append(" <a href=\"https://feisuzhibo.com\">to</a>")
