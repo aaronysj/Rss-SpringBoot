@@ -7,6 +7,10 @@ package com.aaronysj.rss.robot;
  */
 public interface RobotMessage {
 
-    void send();
+    /**
+     * 发送消息
+     * @param msg msg
+     */
+    void send(String msg);
 
 }
