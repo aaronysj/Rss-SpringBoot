@@ -31,7 +31,7 @@ public class DingTalkRobotMsg implements RobotMessage {
     @Resource(name = "robotThreadPool")
     private ThreadPoolExecutor robotThreadPool;
 
-    @Scheduled(cron = "0 0 9/18 * * ?")
+    @Scheduled(cron = "0 0 9,18 * * ?")
     public void workerReminder() {
         robotThreadPool.submit(this::send);
     }
