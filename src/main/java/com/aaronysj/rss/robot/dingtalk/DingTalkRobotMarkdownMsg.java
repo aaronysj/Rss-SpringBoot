@@ -1,5 +1,7 @@
 package com.aaronysj.rss.robot.dingtalk;
 
+import com.aaronysj.rss.feed.sports.tencent.BasketballCacheUtil;
+import com.aaronysj.rss.feed.sports.tencent.nba.NbaFeed;
 import com.aaronysj.rss.robot.DingTalkMsgType;
 import com.aaronysj.rss.robot.RobotMessage;
 import com.aaronysj.rss.robot.RobotProperties;
@@ -8,8 +10,12 @@ import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiRobotSendRequest;
 import com.taobao.api.ApiException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -23,8 +29,8 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @version 0.0.1
  * @date 11/7/21
  */
-@Component("dingTalkTextRobot")
-public class DingTalkRobotTextMsg implements RobotMessage {
+@Component("dingTalkMarkdownRobot")
+public class DingTalkRobotMarkdownMsg implements RobotMessage, InitializingBean {
 
     private static final String ROBOT_API_PREFIX = "https://oapi.dingtalk.com/robot/send?access_token=%s";
 
@@ -34,36 +40,22 @@ public class DingTalkRobotTextMsg implements RobotMessage {
     @Resource(name = "robotThreadPool")
     private ThreadPoolExecutor robotThreadPool;
 
-    @Scheduled(cron = "0 0 9 * * ?")
-    public void workReminder() {
-        int weekNumOfDate = TimeUtils.getWeekNumOfDate(new Date());
-        if(weekNumOfDate == 0 || weekNumOfDate == 6) {
-            // 周六周日 不上班哦
-            return;
-        }
-        robotThreadPool.submit(() -> this.send("小傻瓜，上班打卡了吗 ^_^"));
-    }
+    @Autowired
+    private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
-    @Scheduled(cron = "0 0 18 * * ?")
-    public void getOffWorkReminder1() {
-        int weekNumOfDate = TimeUtils.getWeekNumOfDate(new Date());
-        if(weekNumOfDate == 0 || weekNumOfDate == 6) {
-            // 周六周日 不上班哦
-            return;
-        }
-        robotThreadPool.submit(() -> this.send("辛苦一天，别忘了下班打卡哦 ^-^"));
-//        if (weekNumOfDate == 3 || weekNumOfDate == 5) {
-//            // 周三周五 6点下班
-//        }
-    }
+    private BasketballCacheUtil basketballCacheUtil;
 
-    @Scheduled(cron = "0 30 20 * * ?")
+    @Scheduled(cron = "0 0/30 9-12 * * ?")
     public void getOffWorkReminder2() {
         int weekNumOfDate = TimeUtils.getWeekNumOfDate(new Date());
-        if (weekNumOfDate == 1 || weekNumOfDate == 2 || weekNumOfDate == 4) {
-            // 周一 周二 周四 8点半
-            robotThreadPool.submit(() -> this.send("加班辛苦，别忘了下班打卡哦 ^-^"));
+        if (weekNumOfDate == 0 || weekNumOfDate == 6) {
+            return;
         }
+        String markdown = basketballCacheUtil.getMarkdown(new Date());
+        if (StringUtils.isEmpty(markdown)) {
+            return;
+        }
+        robotThreadPool.submit(() -> this.send(markdown));
     }
 
     @Override
@@ -73,20 +65,18 @@ public class DingTalkRobotTextMsg implements RobotMessage {
             return;
         }
         OapiRobotSendRequest request = new OapiRobotSendRequest();
-        request.setMsgtype(DingTalkMsgType.text.name());
-        OapiRobotSendRequest.Text text = new OapiRobotSendRequest.Text();
-        text.setContent(msg);
-        request.setText(text);
+        request.setMsgtype(DingTalkMsgType.markdown.name());
+        OapiRobotSendRequest.Markdown markdown = new OapiRobotSendRequest.Markdown();
+        markdown.setTitle("今日 NBA");
+        markdown.setText(msg);
+        request.setMarkdown(markdown);
         OapiRobotSendRequest.At at = new OapiRobotSendRequest.At();
-//        at.setAtMobiles(Arrays.asList("14705282855"));
-        at.setIsAtAll(true);
-//        at.setAtUserIds(Arrays.asList("109929","32099"));
+        at.setIsAtAll(false);
         request.setAt(at);
 
-        clockInRobots.forEach(token -> {
+        clockInRobots.stream().skip(1).forEach(token -> {
             DingTalkClient client = new DefaultDingTalkClient(String.format(ROBOT_API_PREFIX, token));
             execute(client, request);
-//            robotThreadPool.submit(() -> execute(client, request));
         });
     }
 
@@ -96,5 +86,10 @@ public class DingTalkRobotTextMsg implements RobotMessage {
         } catch (ApiException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.basketballCacheUtil = new BasketballCacheUtil(reactiveRedisTemplate, new NbaFeed());
     }
 }

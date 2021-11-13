@@ -25,11 +25,13 @@ public class BasketballCacheUtil {
 
     private final BallFeed feedCache;
 
+    private final String markdownKey;
+
     public BasketballCacheUtil(ReactiveRedisTemplate<String, String> reactiveRedisTemplate, BallFeed feedCache) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.feedCache = feedCache;
+        this.markdownKey = feedCache.getHistoryKey() + ":markdown";
     }
-
 
     /**
      * 获取今天最后一场比赛
@@ -50,6 +52,14 @@ public class BasketballCacheUtil {
 
     public void update(Date date, JsonFeedDto nba) {
         update(TimeUtils.dateFormat(date), nba);
+    }
+
+    public void updateMarkdown(Date date, String markdown) {
+        reactiveRedisTemplate.opsForHash().put(markdownKey, TimeUtils.dateFormat(date), markdown).block();
+    }
+
+    public String getMarkdown(Date date) {
+        return (String) reactiveRedisTemplate.opsForHash().get(markdownKey, TimeUtils.dateFormat(date)).block();
     }
 
     public Optional<JsonFeedDto> get(String date) {

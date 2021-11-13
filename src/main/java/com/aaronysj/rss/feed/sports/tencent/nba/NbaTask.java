@@ -161,6 +161,7 @@ public class NbaTask implements FeedTask, InitializingBean {
                 basketballCacheUtil.updateTodayLastGameTime(nowTime, lastGameStartTime);
             }
         }
+        updateMarkdown(nowTime, tencentNbaInfos);
 
         StringBuilder contentBuilder = new StringBuilder();
         // 主要内容
@@ -241,6 +242,84 @@ public class NbaTask implements FeedTask, InitializingBean {
         item.setContentHtml(contentBuilder.toString());
         item.setDatePublished(TimeUtils.dateFormat(nowTime, TimeUtils.UTC_TIME_PATTERN));
         return Optional.of(item);
+    }
+
+    private void updateMarkdown(Date nowTime, List<TencentBallInfo> tencentNbaInfos) {
+
+        StringBuilder contentBuilder = new StringBuilder();
+        // 主要内容
+        String content = tencentNbaInfos.stream()
+                .map(tencentNbaInfo -> {
+                    // 这里其实分为好个字段处理
+                    // 1 （是否白嫖）开始时间 2 是否已结束（已结束；第4节 04:34） 3 客队头像 4 客队名称 5 客队比分 6 主队比分 7 主队名称 8 主队头像 9 集锦 10 数据 11 回放
+                    StringBuilder sb = new StringBuilder();
+                    String time = tencentNbaInfo.getStartTime().substring(11, 16);
+                    String mid = tencentNbaInfo.getMid().split(":")[1];
+                    // 比赛进展
+                    String matchPeriod = parseMatchPeriod(tencentNbaInfo);
+                    int leftGoal = Integer.parseInt(tencentNbaInfo.getLeftGoal());
+                    int rightGoal = Integer.parseInt(tencentNbaInfo.getRightGoal());
+                    String leftName = tencentNbaInfo.getLeftName();
+                    String rightName = tencentNbaInfo.getRightName();
+                    // 比赛结束颁发奖杯
+                    if ("2".equals(tencentNbaInfo.getMatchPeriod())) {
+                        if (leftGoal < rightGoal) { // 主队 win
+                            rightName = " 🏆" + rightName;
+                        } else if (leftGoal > rightGoal) {
+                            leftName = leftName + "🏆 "; // 客队 win
+                        }
+                    }
+                    String video = "1".equals(tencentNbaInfo.getLivePeriod()) ? "直播" : "集锦";
+                    boolean warriors = "勇士".equals(tencentNbaInfo.getLeftName()) || "勇士".equals(tencentNbaInfo.getRightName());
+                    // 勇士的比赛要加粗！
+                    String letsGo = warriors ? "🏀" : "";
+                    String free = "0".equals(tencentNbaInfo.getIsPay()) ? "😎" : "";
+                    String connector = " vs ";
+                    String firstColor = "#993366";
+                    String secondColor = "##666633";
+                    sb.append(letsGo).append(free).append(time).append(" ").append(matchPeriod).append(" ")
+//                            .append("<img style=\"width:36px; height: 36px;\" src=\"").append(TencentNbaInfo.getLeftBadge()).append("\" /> ")
+                            .append("<font color=").append(firstColor).append(">").append(leftName).append("</font>")
+                            .append(" ")
+                            .append(tencentNbaInfo.getLeftGoal())
+                            .append(connector)
+                            .append(tencentNbaInfo.getRightGoal())
+                            .append(" ")
+                            .append("<font color=").append(secondColor).append(">").append(rightName).append("</font>")
+                            .append("  ")
+                            .append("[").append(video).append("]").append("(").append(tencentNbaInfo.getWebUrl()).append(")").append("  ")
+                            .append("[").append("数据").append("]").append("(").append("https://nba.stats.qq.com/nbascore/?mid=").append(mid).append(")").append("  ")
+                            .append("[").append("回放").append("]").append("(").append(tencentNbaInfo.getWebUrl()).append("&replay=1").append(")")
+                    ;
+                    return sb.toString();
+                })
+                .collect(Collectors.joining("\n\n"));
+
+        contentBuilder.append(content);
+        contentBuilder.append("\n\n");
+        contentBuilder.append("👉🏻");
+        buildUrl(contentBuilder, "schedule", "https://nba.stats.qq.com/schedule");
+        contentBuilder.append(" ");
+        buildUrl(contentBuilder, "standings", "https://nba.stats.qq.com/standings");
+        contentBuilder.append("\n\n");
+        contentBuilder.append("👉🏻");
+        buildUrl(contentBuilder, "Welcome", "http://24zhiboba.com");
+        contentBuilder.append(" ");
+        buildUrl(contentBuilder, "to", "https://feisuzhibo.com");
+        contentBuilder.append(" ");
+        buildUrl(contentBuilder, "Hangouts", "https://www.cnmysoft.com/");
+        contentBuilder.append("\n\n");
+        contentBuilder.append("👉🏻");
+        buildUrl(contentBuilder, "十佳球", "https://sports.qq.com/nbavideo/topsk/");
+        contentBuilder.append("\n\n");
+        contentBuilder.append("✌🏻");
+        buildUrl(contentBuilder, "@aaronysj", "https://github.com/aaronysj");
+
+        basketballCacheUtil.updateMarkdown(nowTime, contentBuilder.toString());
+    }
+
+    private void buildUrl(StringBuilder sb, String name, String url) {
+        sb.append("[").append(name).append("]").append("(").append(url).append(")");
     }
 
     private String parseMatchPeriod(TencentBallInfo tencentNbaInfo) {
