@@ -1,6 +1,10 @@
 package top.aaronysj.rss.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -21,6 +25,16 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @Slf4j
 public class SpringBeanConfig {
+
+    @Bean("rabbitListenerContainerFactory")
+    public RabbitListenerContainerFactory<SimpleMessageListenerContainer> rabbitListenerContainerFactory(ConnectionFactory connectionFactory){
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setPrefetchCount(5);
+        factory.setConcurrentConsumers(4);
+        factory.setMaxConcurrentConsumers(4);
+        factory.setConnectionFactory(connectionFactory);
+        return factory;
+    }
 
     @Bean
     public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {

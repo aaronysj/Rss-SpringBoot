@@ -75,7 +75,7 @@ public class BasketballCacheUtil {
      * 返回最近十天的 nba 赛程
      */
     public JsonFeedDto getLatest10Days() {
-        List<Object> latest10Days = TimeUtils.getLast9DaysAndTomorrow();
+        List<Object> latest10Days = TimeUtils.getLatestDate();
         List<Object> blockObjs = reactiveRedisTemplate.opsForHash()
                 .multiGet(feedCache.getHistoryKey(), latest10Days).block();
         if (CollectionUtils.isEmpty(blockObjs)) {

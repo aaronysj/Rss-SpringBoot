@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
 	id 'org.springframework.boot' version '2.3.7.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
@@ -5,7 +7,7 @@ plugins {
 }
 
 group = 'top.aaronysj'
-version = '1.1.0'
+version = '1.1.1'
 sourceCompatibility = '1.8'
 
 configurations {
@@ -14,10 +16,6 @@ configurations {
 	}
 }
 repositories {
-	maven { url 'https://maven.aliyun.com/repository/spring' }
-	maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
-	maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
-	maven { url 'http://maven.aliyun.com/repository/google' }
 	mavenCentral()
 }
 dependencies {
@@ -31,11 +29,30 @@ dependencies {
 	implementation 'cn.hutool:hutool-all:5.7.13'
 	implementation fileTree(dir: 'taobao', include:['*.jar'])
 //	implementation 'org.jsoup:jsoup:1.14.3'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
 	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.amqp:spring-rabbit-test'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
+}
+
+task generateDockerCompose {
+	def templateArgs = [
+			// tag
+			image_tag: "$version".toString(),
+	]
+	def dockerScripts = file("${rootDir}/gradle/template/docker")
+	dependsOn tasks.create("${project.name}-DockerFileCopy", Copy) {
+		from dockerScripts
+		into "$rootDir"
+		filter(ReplaceTokens, tokens: templateArgs)
+	}
+}
+
+allprojects {
+	bootJar.dependsOn generateDockerCompose
 }
 
 test {

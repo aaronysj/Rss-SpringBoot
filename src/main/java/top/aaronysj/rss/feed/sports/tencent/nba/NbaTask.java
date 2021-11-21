@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import top.aaronysj.rss.dto.JsonFeedDto;
 import top.aaronysj.rss.feed.FeedTask;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
  * @author aaronysj
  * @date 10/3/21
  */
-@Component("nba")
+//@Component("nba")
 @Slf4j
 public class NbaTask implements FeedTask, InitializingBean {
 
@@ -124,7 +123,7 @@ public class NbaTask implements FeedTask, InitializingBean {
 
     @Override
     public void init() {
-        TimeUtils.getLast9DaysAndTomorrowDate().forEach(date -> {
+        TimeUtils.getLatest3Date().forEach(date -> {
             // 判断是否已经存在
             Optional<JsonFeedDto> jsonFeedDto = basketballCacheUtil.get(date);
             if (jsonFeedDto.isPresent()) {

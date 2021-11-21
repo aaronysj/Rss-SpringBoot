@@ -127,7 +127,7 @@ public class CbaTask implements FeedTask, InitializingBean {
 
     @Override
     public void init() {
-        TimeUtils.getLast9DaysAndTomorrowDate().forEach(date -> {
+        TimeUtils.getLatest3Date().forEach(date -> {
             // 判断是否已经存在
             Optional<JsonFeedDto> jsonFeedDto = basketballCacheUtil.get(date);
             if (jsonFeedDto.isPresent()) {

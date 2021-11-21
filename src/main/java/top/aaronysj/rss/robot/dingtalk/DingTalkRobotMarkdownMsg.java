@@ -4,14 +4,11 @@ import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiRobotSendRequest;
 import com.taobao.api.ApiException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import top.aaronysj.rss.feed.sports.tencent.BasketballCacheUtil;
-import top.aaronysj.rss.feed.sports.tencent.nba.NbaFeed;
 import top.aaronysj.rss.robot.DingTalkMsgType;
 import top.aaronysj.rss.robot.RobotMessage;
 import top.aaronysj.rss.robot.RobotProperties;
@@ -23,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static top.aaronysj.rss.common.CacheUtil.ROBOT_NBA_MARKDOWN;
 
 /**
  * @author shijie.ye
@@ -30,7 +28,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @date 11/7/21
  */
 @Component("dingTalkMarkdownRobot")
-public class DingTalkRobotMarkdownMsg implements RobotMessage, InitializingBean {
+public class DingTalkRobotMarkdownMsg implements RobotMessage {
 
     private static final String ROBOT_API_PREFIX = "https://oapi.dingtalk.com/robot/send?access_token=%s";
 
@@ -43,15 +41,13 @@ public class DingTalkRobotMarkdownMsg implements RobotMessage, InitializingBean 
     @Autowired
     private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
-    private BasketballCacheUtil basketballCacheUtil;
-
     @Scheduled(cron = "0 0/30 9-12 * * ?")
     public void getOffWorkReminder2() {
         int weekNumOfDate = TimeUtils.getWeekNumOfDate(new Date());
         if (weekNumOfDate == 0 || weekNumOfDate == 6) {
             return;
         }
-        String markdown = basketballCacheUtil.getMarkdown(new Date());
+        String markdown = reactiveRedisTemplate.opsForValue().get(ROBOT_NBA_MARKDOWN).block();
         if (StringUtils.isEmpty(markdown)) {
             return;
         }
@@ -88,8 +84,4 @@ public class DingTalkRobotMarkdownMsg implements RobotMessage, InitializingBean 
         }
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        this.basketballCacheUtil = new BasketballCacheUtil(reactiveRedisTemplate, new NbaFeed());
-    }
 }

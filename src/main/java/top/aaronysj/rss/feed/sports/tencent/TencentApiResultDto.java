@@ -1,9 +1,6 @@
 package top.aaronysj.rss.feed.sports.tencent;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 import top.aaronysj.rss.feed.sports.tencent.nba.TencentBallInfo;
 
 import java.util.List;
@@ -30,17 +27,10 @@ import java.util.Map;
  * @author aaronysj
  * @date 10/2/21
  */
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class TencentApiResultDto {
 
     private int code;
     private Map<String, List<TencentBallInfo>> data;
     private String version;
-
-    public static TencentApiResultDto ok(){
-        return new TencentApiResultDto(200, null, null);
-    }
 }
