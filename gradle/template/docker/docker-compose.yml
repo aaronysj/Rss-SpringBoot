@@ -28,8 +28,8 @@ services:
 
   rss:
     container_name: rss
-    build: . -t @image_tag@
-    image: aaronysj/rss
+    build: .
+    image: aaronysj/rss:@image_tag@
     environment:
       - TZ=Asia/Shanghai
     ports:
