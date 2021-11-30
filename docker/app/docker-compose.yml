@@ -3,7 +3,7 @@ services:
   rss:
     container_name: rss
     build: ../../
-    image: aaronysj/rss:@image_tag@
+    image: aaronysj/rss:1.1.1
     environment:
       - TZ=Asia/Shanghai
     restart: on-failure:5

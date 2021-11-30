@@ -46,7 +46,7 @@ task generateDockerCompose {
 	def dockerScripts = file("${rootDir}/gradle/template/docker")
 	dependsOn tasks.create("${project.name}-DockerFileCopy", Copy) {
 		from dockerScripts
-		into "$rootDir"
+		into "$rootDir/docker/app/"
 		filter(ReplaceTokens, tokens: templateArgs)
 	}
 }

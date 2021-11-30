@@ -1,0 +1,25 @@
+version: '3.5'
+services:
+  redis:
+    container_name: rss_redis
+    image: redis
+    command: redis-server --requirepass gxfc --appendonly yes
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data:/data
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.8.25-management
+    restart: always
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=rss
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=gxfc
+      - RABBITMQ_DEFAULT_VHOST=aaronysj
+      - TZ=Asia/Shanghai
+
+networks:
+  default:
+    external:
+      name: rss_net
